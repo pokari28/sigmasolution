@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>それゆけシグマ君！</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .game-container {
+            background-color: white;
+            width: 480px; 
+            height: 600px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 4px solid #ff99cc;
+            display: flex;
+            flex-direction: row;
+            position: relative;
+        }
+
+        #mute-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            border: 2px solid #ff99cc;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #password-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.98);
+            z-index: 300; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .pass-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6699;
+            margin-bottom: 10px;
+        }
+        .pass-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        #password-input {
+            font-size: 24px;
+            padding: 10px;
+            width: 200px;
+            text-align: center;
+            border: 3px solid #ff99cc;
+            border-radius: 10px;
+            outline: none;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+        #password-input:focus {
+            border-color: #ff6699;
+        }
+        .pass-btn {
+            background-color: #ff6699;
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .pass-btn:active {
+            transform: scale(0.95);
+        }
+        #password-error {
+            color: #ff0000;
+            font-size: 14px;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+            animation: shake 0.5s;
+        }
+
+        #title-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: opacity 0.3s;
+        }
+        .title-text {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff6699;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 #fff;
+            line-height: 1.3;
+        }
+        .title-img {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+        
+        .btn-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; 
+            width: 80%;
+        }
+        .start-btn {
+            color: white;
+            border: none;
+            padding: 15px 0;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            width: 100%;
+        }
+        .start-btn:active { transform: scale(0.95); }
+        
+        .beginner-mode {
+            background-color: #43e97b; 
+            border: 2px solid #38f9d7;
+        }
+        .normal-mode {
+            background-color: #ff6699;
+            border: 2px solid #ff99cc;
+        }
+
+        .highscore-text {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .side-panel {
+            width: 60px;
+            background-color: #fff0f5;
+            border-left: 2px solid #ff99cc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            z-index: 20;
+        }
+
+        .point-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #ff6699;
+            writing-mode: vertical-rl;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .gauge-container {
+            width: 20px;
+            height: 100%;
+            background-color: #fff;
+            border: 2px solid #ff99cc;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .gauge-fill {
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(0deg, #4facfe 0%, #00f2fe 100%);
+            transition: height 0.5s ease-out, background 0.5s;
+        }
+        .score-num {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .character-area {
+            background-color: #ffebf5;
+            height: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            position: relative;
+            overflow: hidden;
+        }
+        .character-img {
+            width: 360px;
+            height: 360px;
+            object-fit: contain;
+            transition: transform 0.2s;
+            margin-bottom: -40px; 
+            z-index: 1;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            bottom: 10px; 
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 10px;
+            padding: 12px 16px;
+            width: 90%;
+            min-height: 80px; 
+            border: 2px solid #333;
+            font-weight: 900;
+            color: #000; 
+            text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+            z-index: 10;
+            font-size: 16px; 
+            line-height: 1.5;
+            text-align: left;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            white-space: pre-wrap; 
+        }
+
+        .quiz-area { 
+            flex: 1;
+            padding: 20px; 
+            background-color: white;
+            z-index: 5;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+        }
+
+        .options-grid { display: grid; gap: 10px; }
+        button {
+            background-color: #4da6ff;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #3385cc; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        .correct-anim { animation: jump 0.5s; }
+        .wrong-anim { animation: shake 0.5s; }
+
+        @keyframes jump { 0% { transform: translateY(0); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0); } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } 100% { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="mute-btn" onclick="toggleMute()">🔊</div>
+
+    <div id="password-screen">
+        <div class="pass-title">社員専用ページ</div>
+        <div class="pass-desc">秘密のパスワード（数字3桁）を入力してね</div>
+        <input type="tel" id="password-input" placeholder="パスワード">
+        <button class="pass-btn" onclick="checkPassword()">ログイン</button>
+        <div id="password-error">パスワードが違うみたい…</div>
+    </div>
+
+    <div id="title-screen">
+        <h1 class="title-text">それゆけ<br>シグマ君！</h1>
+        <img src="title.png" alt="タイトル画像" class="title-img">
+        
+        <div class="btn-area">
+            <button class="start-btn beginner-mode" onclick="startGame('beginner')">🔰 初心者モード (10問)</button>
+            <button class="start-btn normal-mode" onclick="startGame('normal')">🔥 通常モード (30問)</button>
+        </div>
+
+        <div class="highscore-text">最高ポイント: <span id="highscore-num">0</span>%</div>
+    </div>
+
+    <div class="main-content">
+        <div class="character-area">
+            <img id="char-img" src="normal.png" alt="キャラクター画像" class="character-img">
+            <div id="char-voice" class="speech-bubble"></div>
+        </div>
+        <div class="quiz-area">
+            <div id="options" class="options-grid"></div>
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <span class="point-label">ポイント</span>
+        <div class="gauge-container">
+            <div id="gauge-fill" class="gauge-fill"></div>
+        </div>
+        <span id="score-text" class="score-num">0%</span>
+    </div>
+</div>
+
+<script src="questions.js"></script>
+
+<script>
+    function checkPassword() {
+        const inputVal = document.getElementById('password-input').value;
+        const errorMsg = document.getElementById('password-error');
+        
+        if (inputVal === '490') {
+            sessionStorage.setItem('sigmaUnlocked', 'true');
+            document.getElementById('password-screen').style.display = 'none';
+            playStartSound(); 
+        } else {
+            errorMsg.style.display = 'block';
+            playBadSound(); 
+            errorMsg.style.animation = 'none';
+            setTimeout(() => { errorMsg.style.animation = 'shake 0.5s'; }, 10);
+        }
+    }
+
+    window.onload = function() {
+        if (sessionStorage.getItem('sigmaUnlocked') === 'true') {
+            document.getElementById('password-screen').style.display = 'none';
+        }
+        document.getElementById('password-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+    };
+
+    window.onerror = function(msg, url, line) {
+        const voice = document.getElementById("char-voice");
+        if(voice) voice.innerText = "エラーが発生しました:\n" + msg;
+        document.getElementById("title-screen").style.display = 'none';
+    };
+
+    const images = {
+        normal: "normal.png",
+        good: "good.png",
+        bad: "bad.png",
+        pro_normal: "pro_normal.png",
+        pro_good: "pro_good.png",
+        pro_bad: "pro_bad.png",
+        normal10: "normal10.png",
+        normal20: "normal20.png",
+        normal30: "normal30.png",
+        special: "special.png",
+        special20: "special20.png",
+        special30: "special30.png",
+        special_max: "special_max.png"
+    };
+
+    let audioCtx;
+    let isMuted = false;
+    let bgmTimer = null;
+    let currentScoreData = [];
+    let noteIndex = 0;
+    let baseTempo = 150;
+
+    // ▼ 高音域（C6以降）を新しく追加したよ！
+    const NOTES = {
+        'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31, 'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
+        'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
+        'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+        'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77,
+        'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51, 'F6': 1396.91, 'G6': 1567.98, 'A6': 1760.00, 'B6': 1975.53,
+        'R': 0 
+    };
+
+    const bgmScores = {
+        beginner: {
+            tempo: 220, 
+            track: [
+                {n:['E5', 'C5', 'C3'], l:2}, {n:['D5', 'B4', 'C3'], l:1}, {n:['C5', 'G4', 'C3'], l:1},
+                {n:['G5', 'E5', 'C3'], l:2}, {n:['E5', 'C5', 'C3'], l:2},
+                {n:['A5', 'F5', 'F2'], l:2}, {n:['G5', 'E5', 'F2'], l:1}, {n:['F5', 'C5', 'F2'], l:1},
+                {n:['E5', 'C5', 'C3'], l:4},
+                {n:['D5', 'B4', 'G2'], l:2}, {n:['E5', 'C5', 'G2'], l:1}, {n:['F5', 'D5', 'G2'], l:1},
+                {n:['G5', 'E5', 'E2'], l:2}, {n:['E5', 'B4', 'E2'], l:2},
+                {n:['A5', 'F5', 'F2'], l:2}, {n:['B5', 'G5', 'G2'], l:2},
+                {n:['C5', 'E5', 'C3'], l:4}
+            ]
+        },
+        pro: {
+            tempo: 220,
+            track: [
+                {n:['A5', 'E5', 'A2'], l:2}, {n:['G5', 'E5', 'A2'], l:1}, {n:['A5', 'E5', 'A2'], l:1},
+                {n:['C5', 'A4', 'F2'], l:2}, {n:['A5', 'F5', 'F2'], l:2},
+                {n:['B5', 'G5', 'G2'], l:2}, {n:['A5', 'F5', 'G2'], l:1}, {n:['G5', 'D5', 'G2'], l:1},
+                {n:['A5', 'E5', 'A2'], l:4},
+                {n:['F5', 'D5', 'D3'], l:2}, {n:['E5', 'C5', 'D3'], l:1}, {n:['D5', 'A4', 'D3'], l:1},
+                {n:['E5', 'C5', 'A2'], l:2}, {n:['C5', 'A4', 'A2'], l:2},
+                {n:['D5', 'B4', 'B2'], l:2}, {n:['E5', 'B4', 'E2'], l:2},
+                {n:['A5', 'E5', 'A2'], l:4}
+            ]
+        },
+        // ▼ クライマックス用（20問突破後）のアップテンポで熱いBGMを追加！
+        pro_climax: {
+            tempo: 120, // テンポを速くして緊迫感を出す
+            track: [
+                {n:['A5', 'C5', 'A2'], l:1}, {n:['B5', 'D5', 'G2'], l:1}, {n:['C6', 'E5', 'F2'], l:2},
+                {n:['A5', 'C5', 'A2'], l:1}, {n:['B5', 'D5', 'G2'], l:1}, {n:['C6', 'E5', 'F2'], l:2},
+                {n:['E6', 'G5', 'C3'], l:2}, {n:['D6', 'F5', 'G2'], l:2},
+                {n:['C6', 'E5', 'A2'], l:2}, {n:['B5', 'D5', 'E2'], l:2}
+            ]
+        }
+    };
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playMultiNote(freqs, duration) {
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+
+        freqs.forEach((freq, i) => {
+            if (freq <= 0) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            if (i === 0) {
+                osc.type = 'square'; 
+                gain.gain.setValueAtTime(0.03, now);
+            } else if (i === 1) {
+                osc.type = 'triangle'; 
+                gain.gain.setValueAtTime(0.04, now);
+            } else {
+                osc.type = 'sawtooth'; 
+                gain.gain.setValueAtTime(0.04, now);
+            }
+
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + duration);
+            gain.gain.linearRampToValueAtTime(0, now + duration);
+        });
+    }
+
+    function playNextNote() {
+        if (isMuted || !currentScoreData || currentScoreData.length === 0) return;
+        const noteData = currentScoreData[noteIndex];
+        const duration = noteData.l * baseTempo; 
+        
+        const freqs = noteData.n.map(note => NOTES[note] || 0);
+        playMultiNote(freqs, duration * 0.001 * 0.8);
+
+        noteIndex = (noteIndex + 1) % currentScoreData.length;
+        bgmTimer = setTimeout(playNextNote, duration);
+    }
+
+    // ▼ スコア（正解数）に応じて再生するBGMを分岐させるように変更
+    function startGeneratedBGM(mode) {
+        if (isMuted) return;
+        if (bgmTimer) clearTimeout(bgmTimer); 
+        initAudio();
+        
+        if (mode === 'beginner') {
+            currentScoreData = bgmScores.beginner.track;
+            baseTempo = bgmScores.beginner.tempo;
+        } else {
+            // プロモードで20問以上正解していたらクライマックスBGMへ！
+            if (score >= 20) {
+                currentScoreData = bgmScores.pro_climax.track;
+                baseTempo = bgmScores.pro_climax.tempo;
+            } else {
+                currentScoreData = bgmScores.pro.track;
+                baseTempo = bgmScores.pro.tempo;
+            }
+        }
+        noteIndex = 0;
+        playNextNote();
+    }
+
+    function stopBGM() {
+        if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+    }
+
+    function playOscillator(freq, duration, type, volume) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        osc.start(now);
+        osc.stop(now + duration);
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.linearRampToValueAtTime(0, now + duration);
+    }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        const btn = document.getElementById("mute-btn");
+        if (isMuted) {
+            btn.innerText = "🔇";
+            stopBGM();
+        } else {
+            btn.innerText = "🔊";
+            if (document.getElementById("title-screen").style.display === "none" && document.getElementById('password-screen').style.display === 'none') {
+                startGeneratedBGM(currentMode);
+            }
+        }
+    }
+
+    function playTypeSound() { if (!isMuted) { initAudio(); playOscillator(800 + Math.random() * 200, 0.05, 'square', 0.02); } }
+    function playGoodSound() { if (!isMuted) { initAudio(); playOscillator(660, 0.1, 'sine', 0.1); setTimeout(() => playOscillator(880, 0.3, 'sine', 0.1), 100); } }
+    function playBadSound() { if (!isMuted) { initAudio(); playOscillator(150, 0.2, 'sawtooth', 0.1); setTimeout(() => playOscillator(100, 0.3, 'sawtooth', 0.1), 200); } }
+    
+    function playFanfare() {
+        if (isMuted) return;
+        stopBGM(); initAudio();
+        setTimeout(() => playOscillator(523.25, 0.15, 'square', 0.1), 0);
+        setTimeout(() => playOscillator(659.25, 0.15, 'square', 0.1), 150);
+        setTimeout(() => playOscillator(783.99, 0.15, 'square', 0.1), 300);
+        setTimeout(() => playOscillator(1046.50, 0.6, 'square', 0.1), 450);
+        setTimeout(() => {
+            if (!isMuted && document.getElementById("title-screen").style.display === "none") {
+                // ファンファーレが終わった後、条件に合わせてBGMが再開（20点以上ならクライマックスへ）
+                startGeneratedBGM(currentMode);
+            }
+        }, 1500);
+    }
+    
+    function playStartSound() { if (!isMuted) { initAudio(); setTimeout(() => playOscillator(1046.50, 0.1, 'square', 0.1), 0); setTimeout(() => playOscillator(1318.51, 0.4, 'square', 0.1), 100); } }
+
+    let currentQIndex = 0;
+    let score = 0;
+    let quizData = [];
+    let highScore = localStorage.getItem('socialQuizHighScore') || 0;
+    let isQuestionFailed = false;
+    let currentMode = 'normal';
+
+    const titleScreen = document.getElementById("title-screen");
+    const highscoreNum = document.getElementById("highscore-num");
+    const charImg = document.getElementById("char-img");
+    const optionsDiv = document.getElementById("options");
+    const gaugeFill = document.getElementById("gauge-fill");
+    const scoreText = document.getElementById("score-text");
+
+    highscoreNum.innerText = highScore;
+
+    function startGame(mode) {
+        titleScreen.style.display = 'none'; 
+        try {
+            initAudio();
+            playStartSound();
+        } catch(e) {}
+
+        currentMode = mode;
+        try {
+            startGeneratedBGM(currentMode);
+        } catch(e) {}
+        
+        initGame();
+    }
+
+    function initGame() {
+        if (typeof beginnerQuestions === 'undefined' || typeof proQuestions === 'undefined') {
+            showDialogue("エラー：questions.jsが\n正しく読み込まれていません");
+            return;
+        }
+        
+        if (currentMode === 'beginner') {
+            quizData = shuffle([...beginnerQuestions]).slice(0, 10);
+        } else {
+            quizData = shuffle([...proQuestions]).slice(0, 30);
+        }
+        
+        if (quizData.length === 0) {
+            showDialogue("問題データがありません。\nquestions.jsを確認してね。");
+            return;
+        }
+        
+        currentQIndex = 0;
+        score = 0;
+        isQuestionFailed = false;
+        
+        charImg.src = getCurrentNormalImage();
+        updateGauge();
+        showQuestion();
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    
+    function getCurrentNormalImage() {
+        if (currentMode === 'normal') {
+            if (score >= 30) return images.normal30 || images.normal20 || images.pro_normal;
+            if (score >= 20) return images.normal20 || images.pro_normal;
+            if (score >= 10) return images.normal10 || images.pro_normal;
+            return images.pro_normal;
+        } else {
+            return images.normal;
+        }
+    }
+    
+    function updateGauge() {
+        let maxQ = quizData.length > 0 ? quizData.length : 1;
+        let percentage = Math.round((score / maxQ) * 100);
+        gaugeFill.style.height = percentage + "%";
+        scoreText.innerText = percentage + "%";
+        if (percentage < 30) { gaugeFill.style.background = "linear-gradient(0deg, #4facfe 0%, #00f2fe 100%)"; }
+        else if (percentage < 70) { gaugeFill.style.background = "linear-gradient(0deg, #43e97b 0%, #38f9d7 100%)"; }
+        else { gaugeFill.style.background = "linear-gradient(0deg, #fa709a 0%, #fee140 100%)"; }
+    }
+
+    let typeWriterTimer;
+    function showDialogue(text) {
+        const bubble = document.getElementById("char-voice");
+        bubble.textContent = ""; 
+        if (typeWriterTimer) clearTimeout(typeWriterTimer);
+        let i = 0;
+        function typeChar() {
+            if (i < text.length) {
+                bubble.textContent += text.charAt(i);
+                playTypeSound();
+                i++;
+                typeWriterTimer = setTimeout(typeChar, 40); 
+            }
+        }
+        typeChar();
+    }
+
+    const preQuestions = [
+        "行くよ！", "次言うよ！", "じゃあ次はこれ！", "準備はいい？", "次の問題！",
+        "さあ、次！", "これはどうかな？", "集中してね！", "よく聞いて！", "次はこれだ！",
+        "どんどん行くよ！", "まだまだ行くよ！", "ついてこれる？", "次は難しいかも？", "さあ、頑張って！",
+        "次の勝負！", "気合入れて！", "深呼吸して…はい！", "準備万端？", "さあ、答えて！"
+    ];
+
+    const reactions = {
+        correct: ["その調子！", "正解！いいぞ！", "ポイント上昇中！", "やるね！", "素晴らしい！", "君は天才かも！？"],
+        wrong: ["ドンマイ！", "次は当てよう！", "復習が大事！", "あちゃー…", "惜しかったかも？"],
+        special10: "10問正解！いいペースだよ！",
+        special20: "20問正解！エライエライ！",
+        special30: "30問正解！先生も嬉しいよ！"
+    };
+
+    function showQuestion() {
+        if (currentQIndex >= quizData.length) {
+            finishGame();
+            return;
+        }
+
+        const q = quizData[currentQIndex];
+        isQuestionFailed = false;
+
+        const displayQuestionContent = () => {
+             showDialogue(`Q${currentQIndex + 1}. \n${q.q}`);
+             
+             optionsDiv.innerHTML = "";
+             q.options.forEach((opt, index) => {
+                 const btn = document.createElement("button");
+                 btn.innerText = opt;
+                 btn.onclick = (e) => checkAnswer(index, q.ans, e.target);
+                 optionsDiv.appendChild(btn);
+             });
+             charImg.src = getCurrentNormalImage();
+             charImg.classList.remove("correct-anim", "wrong-anim");
+        };
+
+        let prePhrase = "";
+        if (currentQIndex === 0) {
+            prePhrase = "先生と一緒に頑張ろ！";
+        } else {
+            prePhrase = preQuestions[Math.floor(Math.random() * preQuestions.length)];
+        }
+
+        showDialogue(prePhrase);
+        optionsDiv.innerHTML = "";
+        charImg.src = getCurrentNormalImage();
+
+        setTimeout(() => {
+            displayQuestionContent();
+        }, 1000);
+    }
+
+    function checkAnswer(selectedIndex, correctIndex, clickedBtn) {
+        if (selectedIndex === correctIndex) {
+            const buttons = optionsDiv.querySelectorAll("button");
+            buttons.forEach(btn => btn.disabled = true);
+            clickedBtn.style.backgroundColor = "#ff99cc"; 
+
+            if (!isQuestionFailed) {
+                score++;
+                updateGauge();
+            }
+
+            let specialReaction = null;
+            let specialImage = null;
+            if (!isQuestionFailed) {
+                if (score === 20) { specialReaction = reactions.special20; specialImage = images.special20; } 
+                else if (score === 30) { specialReaction = reactions.special30; specialImage = images.special30; } 
+                else if (score === 10) { specialReaction = reactions.special10; specialImage = images.special; }
+            }
+
+            if (specialImage) {
+                playFanfare();
+                showDialogue(specialReaction);
+                charImg.src = specialImage;
+                currentQIndex++;
+                setTimeout(showQuestion, 4000); 
+                return;
+            }
+
+            playGoodSound();
+            const randomPraise = reactions.correct[Math.floor(Math.random() * reactions.correct.length)];
+            showDialogue(randomPraise);
+            
+            charImg.src = (currentMode === 'normal') ? images.pro_good : images.good; 
+            charImg.classList.add("correct-anim");
+            currentQIndex++;
+            setTimeout(showQuestion, 2000);
+
+        } else {
+            isQuestionFailed = true;
+            playBadSound();
+            const randomEncourage = reactions.wrong[Math.floor(Math.random() * reactions.wrong.length)];
+            showDialogue(randomEncourage);
+            
+            charImg.src = (currentMode === 'normal') ? images.pro_bad : images.bad; 
+            charImg.classList.add("wrong-anim");
+            clickedBtn.style.backgroundColor = "#999";
+            clickedBtn.disabled = true;
+        }
+    }
+
+    function finishGame() {
+        stopBGM();
+        let maxQ = quizData.length > 0 ? quizData.length : 1;
+        const finalPercentage = Math.round((score / maxQ) * 100);
+        
+        let endMessage = `全問終了！最終ポイント: ${finalPercentage}%\n`;
+        
+        if (currentMode === 'normal' && finalPercentage > highScore) {
+            highScore = finalPercentage;
+            localStorage.setItem('socialQuizHighScore', highScore); 
+            highscoreNum.innerText = highScore; 
+            endMessage += "🎉ハイスコア更新！🎉\n";
+        }
+
+        optionsDiv.innerHTML = '<button onclick="location.reload()">タイトルに戻る</button>'; 
+        
+        if ((currentMode === 'beginner' && score === 10) || 
+            (currentMode === 'normal' && score === 30)) {
+            endMessage += "とっても頑張ったね！\n今度もよろしくね！";
+            charImg.src = images.special_max; 
+            playFanfare();
+            gaugeFill.style.height = "100%";
+            gaugeFill.style.background = "linear-gradient(0deg, #ff0844 0%, #ffb199 100%)";
+        } else {
+            endMessage += "お疲れ様！\nまた挑戦してね！";
+            charImg.src = (currentMode === 'normal') ? images.pro_normal : images.normal;
+        }
+
+        showDialogue(endMessage);
+    }
+</script>
+
+</body>
+</html>
